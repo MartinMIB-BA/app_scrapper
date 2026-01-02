@@ -3,6 +3,8 @@ import os
 import datetime
 import instaloader
 import base64
+import time
+import random
 
 # Configuration: Map Trail Name to Instagram Username
 # NOTE: Using public web access or strict login is tricky. 
@@ -99,6 +101,12 @@ def mock_scrape():
         L = None
 
     for trail_name, handle in TRAIL_config.items():
+        # Human-like delay between profiles (15 to 45 seconds)
+        if L: 
+            sleep_time = random.randint(15, 45)
+            print(f"Waiting {sleep_time}s to act like a human... ☕")
+            time.sleep(sleep_time)
+
         # Only scrape the ones we have specific handles for in display_names (active set)
         if trail_name in display_names and L:
             target_handle = display_names[trail_name]
