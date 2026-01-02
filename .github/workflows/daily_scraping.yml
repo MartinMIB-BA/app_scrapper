@@ -60,6 +60,7 @@ jobs:
       run: |
         git config --global user.name 'GitHub Action'
         git config --global user.email 'action@github.com'
-        git add assets/status/trail_status.json assets/data/instagram_feed.json assets/data/instagram/
+        # ZMENA HERE: Pridávame celý priečinok assets, aby to nezlyhalo na chýbajúcich súboroch
+        git add assets/
         git commit -m "Update trail status and feed [skip ci]"
         git push
