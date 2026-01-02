@@ -175,20 +175,7 @@ def mock_scrape():
                         "username": target_handle,
                         "posts": []
                     }
-        else:
-            # Keep mock for others (always run this as it's deterministic)
-             results[trail_name] = {
-                "username": handle,
-                "posts": [
-                    {
-                        "caption": f"Aktuálny stav pre {trail_name}: Dnes (sobota) otvorené! Traily sú suché... 🚵‍♂️☀️",
-                        "date": timestamp,
-                        "timestamp": int(datetime.datetime.now().timestamp()),
-                        "url": f"https://instagram.com/{handle}",
-                        "image_url": "PLACEHOLDER_FOR_UI_TEST" 
-                    }
-                ]
-            }
+
     
     os.makedirs("assets/data", exist_ok=True)
     with open("assets/data/instagram_feed.json", "w", encoding="utf-8") as f:
