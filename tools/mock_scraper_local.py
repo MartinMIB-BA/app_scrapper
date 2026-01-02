@@ -2,6 +2,7 @@ import json
 import os
 import datetime
 import instaloader
+import base64
 
 # Configuration: Map Trail Name to Instagram Username
 # NOTE: Using public web access or strict login is tricky. 
@@ -40,6 +41,17 @@ def mock_scrape():
     In the real GitHub Action, this will be replaced by actual scraping.
     """
     results = {}
+    json_path = "assets/data/instagram_feed.json"
+    
+    # 1. LOAD EXISTING DATA (To preserve it in case of failure)
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                results = json.load(f)
+            print("Loaded existing data. Will preserve entries if scraping fails.")
+        except Exception as e:
+            print(f"Error loading existing JSON: {e}")
+
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     
     display_names = {
@@ -66,7 +78,6 @@ def mock_scrape():
         session_user = os.environ.get("IG_SESSION_USER")
         
         if session_data and session_user:
-            import base64
             # Decode session file content
             try:
                 # We expect base64 encoded bytes of the session file
@@ -148,19 +159,24 @@ def mock_scrape():
                         "image_url": final_image_url 
                     })
 
+                # SUCCESS: Overwrite the entry with new data
                 results[trail_name] = {
                     "username": target_handle,
                     "posts": posts_data
                 }
                 print(f"  -> Success! Found {len(posts_data)} posts for {trail_name}. Images downloaded.")
+                
             except Exception as e:
                 print(f"  -> Error scraping {target_handle}: {e}")
-                results[trail_name] = {
-                    "username": target_handle,
-                    "posts": []
-                }
+                # FAILURE: Do NOT blank out the entry. Keep `results[trail_name]` as it was loaded from file.
+                if trail_name not in results:
+                    # If we don't have old data, we have to provide empty fallback
+                    results[trail_name] = {
+                        "username": target_handle,
+                        "posts": []
+                    }
         else:
-            # Keep mock for others
+            # Keep mock for others (always run this as it's deterministic)
              results[trail_name] = {
                 "username": handle,
                 "posts": [
@@ -178,7 +194,7 @@ def mock_scrape():
     with open("assets/data/instagram_feed.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
     
-    print("MOCK Data generated in assets/data/instagram_feed.json")
+    print("Data saved to assets/data/instagram_feed.json")
 
 if __name__ == "__main__":
     mock_scrape()
