@@ -1,0 +1,65 @@
+name: Daily Trail Scraping
+
+on:
+  schedule:
+    # Runs at 07:00 UTC (8:00/9:00 CET depending on DST)
+    - cron: '0 7 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install instaloader beautifulsoup4 requests firebase-admin firebase-functions
+
+    - name: Run Scraping Script
+      # We modify the wrapper script call or run commands directly here.
+      # Since run_daily_scraping.sh assumes a specific venv structure, we'll run python commands directly
+      # to avoid complexity with venv on CI.
+      env:
+        IG_SESSION_USER: ${{ secrets.IG_SESSION_USER }}
+        IG_SESSION_DATA: ${{ secrets.IG_SESSION_DATA }}
+        # If we had a session file secret, we would write it here.
+        # For now, we rely on public access or user provided env var.
+      run: |
+        # Run Web Scraper
+        python scripts/fetch_trail_status.py
+        
+        # Run General Instagram Scraper
+        # Note: Ideally, we should have a session file to avoid login blocks.
+        # If IG_SESSION_USER is not set, it might fail or return mock data depending on logic.
+        python tools/mock_scraper_local.py
+
+    - name: Check for changes
+      id: check_changes
+      run: |
+        if [[ -n $(git status --porcelain assets/) ]]; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and Push changes
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add assets/status/trail_status.json assets/data/instagram_feed.json assets/data/instagram/
+        git commit -m "Update trail status and feed [skip ci]"
+        git push
