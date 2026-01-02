@@ -130,7 +130,9 @@ def mock_scrape():
                         if response.status_code == 200:
                             with open(local_path, "wb") as f:
                                 f.write(response.content)
-                            final_image_url = local_path
+                            # SAVE AS GITHUB RAW URL (Live Update)
+                            # Repo: MartinMIB-BA/app_scrapper
+                            final_image_url = f"https://raw.githubusercontent.com/MartinMIB-BA/app_scrapper/main/assets/data/instagram/{local_filename}"
                         else:
                             print(f"    Failed to download image: {response.status_code}")
                             final_image_url = img_url # Fallback to remote if download fails
